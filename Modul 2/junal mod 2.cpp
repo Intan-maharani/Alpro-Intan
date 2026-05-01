@@ -2,7 +2,7 @@
 using namespace std;
 int main () {
 	int umur,perlindungan=3;
-	bool kondisi=true;
+	bool kondisi=true,benar=true;
 	char huruf;
 	
 cout<<"===GOBLET OF FIRE: TRURNAMEN OF TRIWIZARD==="<<endl;
@@ -13,8 +13,9 @@ cout<<"Piala api menyala! anda terpilih sebagai triwizard champion"<<endl;;
 }
 else{
 	cout<<"piala api menolak anda! umur terlalu kecil"<<endl;;
-	kondisi=false;
+	benar=false;
 }
+while(benar){
 
 //tugas satu 
 while (kondisi){
@@ -27,11 +28,12 @@ switch (huruf){
 	case 'a':		
 cout<<"Naga menyemburkan api! anda terluka"<<endl;;
 cout<<"sisa perlindungan sihir: "<<(perlindungan-1)<<endl;
-break;
+continue;
 
 	case 'b':
 cout<<"Berhasil! anda mengambil telur emas"<<endl;;
 kondisi=false;
+break;
 
 	default:
 cout<<"pilihan tidak valid ulangi pilihan"<<endl;;
@@ -41,8 +43,8 @@ cout<<"pilihan tidak valid ulangi pilihan"<<endl;;
 else{
 cout<<"kesempatan habis! anda di tarik keluar arena oleh pawang naga"<<endl;;
 }
-
 }
+
 
 //tugas 2 danau hitam
 cout<<"---tugas 2 Danau Hitam---"<<endl;;
@@ -146,6 +148,7 @@ keadaan=false;
 }
 
 cout<<"Tepat 60 menit anda menyelamatkan sandera: "<<endl;
+}
 }
 	return 0;
 }

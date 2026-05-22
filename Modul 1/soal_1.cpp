@@ -80,6 +80,6 @@ int main(){
     cout << "Ini mau di Donasikan ga Ren?" << endl;
     cout << "[Rendy]: GAS" << endl;
     cout << "============================================" << endl;
-    cout<<"harga+pajak"<<Harga<<endl;
+    
 	return 0;
 }

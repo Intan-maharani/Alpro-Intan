@@ -1,8 +1,5 @@
 #include <iostream>
-
 using namespace std;
-extern "C" int system(const char* command);
-
 
 int hitungPanjang(char teks[]) {
     int len = 0;
@@ -17,7 +14,6 @@ void printLeadingZero(int n) {
 
 void bersihkanBuffer() {
     cin.clear();
-    while (cin.get() != '\n');
 }
 
 // --- TASK 1: DECODE SIGNAL ---
@@ -121,10 +117,10 @@ void task2() {
 
             int idx = 0, j = 0;
             while (input[idx] != '\0') {
-                if (input[idx] != ' ') tanpaSpasi[j++] = input[idx];
+                if (input[idx] != ' ') tanpaSpasi[j++] = input[idx];//Jika karakter bukan spasi: Karakter tersebut disalin ke tanpaSpasi[j]
                 idx++;
             }
-            tanpaSpasi[j] = '\0';
+            tanpaSpasi[j] = '\0';//Dengan \0: Program membaca A, B, C, lalu berhenti karena ada \0. Hasil: ABC.
 
             cout << "---------------------------------------------" << endl;
             cout << "Hasil untuk Kalimat ke-" << k << ":" << endl;

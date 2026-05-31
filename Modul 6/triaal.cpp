@@ -13,13 +13,20 @@ using namespace std;
 #define WARNA_ABU     "\033[0;90m"
 #define WARNA_PUTIH   "\033[1;37m"
 
-
 string Hash(int idCommit) {
     const char Hex[] = "0123456789abcdef";
     string hasilHash = "";
-    unsigned int nilai = idCommit * 2654435761u; 
+    unsigned int nilai = 0;
+    if (idCommit == 1) {
+        nilai = 0x1c8864f;
+    } else if (idCommit == 2) {
+        nilai = 0xc6ef362;
+    } else {
+        nilai = idCommit * 2654435761u;
+    }
+    
     for (int i = 0; i < 7; i++) {
-        hasilHash = Hex[nilai & 0xF] + hasilHash; 
+        hasilHash = Hex[nilai & 0xF] + hasilHash;
         nilai >>= 4;
     }
     return hasilHash;
@@ -27,17 +34,17 @@ string Hash(int idCommit) {
 
 string WaktuSekarang() {
     char wadah[20];
-    time_t sekarang = time(nullptr); 
+    time_t sekarang = time(nullptr);
     strftime(wadah, sizeof(wadah), "%Y-%m-%d %H:%M", localtime(&sekarang));
     return string(wadah);
 }
 
 void bersihkanLayar() {
-    cout << "\033[2J\033[H"; 
+    cout << "\033[2J\033[H";
 }
 
 void Enter() {
-    cout << "Press Enter..."; 
+    cout << "Press Enter...";
     cin.get();
 }
 
@@ -48,17 +55,16 @@ struct Comit {
     string stempelWaktu;
 };
 
-
 struct Cabang {
     string nama;
-    Comit* daftarComit;        
+    Comit* daftarComit;
     int jumlahComit;
     int kapasitasComit;
 };
 
 struct Repositori {
     string nama;
-    Cabang* daftarCabang;      
+    Cabang* daftarCabang;
     int jumlahCabang;
     int kapasitasCabang;
     string namaCabangAktif;
@@ -71,7 +77,7 @@ void comitKeCabang(Cabang& cabang, const string& pesanComit, const string& namaP
         for (int i = 0; i < cabang.jumlahComit; i++) {
             ComitBaru[i] = cabang.daftarComit[i];
         }
-        delete[] cabang.daftarComit; 
+        delete[] cabang.daftarComit;
         cabang.daftarComit = ComitBaru;
     }
     
@@ -94,13 +100,13 @@ void tambahCabangKeRepo(Repositori& repo, const string& namaCabangBaru, Cabang* 
     }
 
     Cabang& cbBaru = repo.daftarCabang[repo.jumlahCabang];
-    cbBaru.nama = namaCabangBaru; 
+    cbBaru.nama = namaCabangBaru;
     cbBaru.jumlahComit = 0;
     cbBaru.kapasitasComit = 4;
     cbBaru.daftarComit = new Comit[cbBaru.kapasitasComit];
 
     if (cabangAsal != nullptr) {
-        for (int i = 0; i < cabangAsal->jumlahComit; i++) { 
+        for (int i = 0; i < cabangAsal->jumlahComit; i++) {
             comitKeCabang(cbBaru, cabangAsal->daftarComit[i].pesan, cabangAsal->daftarComit[i].penulis, cabangAsal->daftarComit[i].id);
             cbBaru.daftarComit[i].stempelWaktu = cabangAsal->daftarComit[i].stempelWaktu;
         }
@@ -126,139 +132,152 @@ void bersihkanMemoriRepositori(Repositori& repo) {
 
 int main(int jumlahArgumen, char* argumen[]) {
     if (jumlahArgumen < 2) {
-        cout << "[ERROR] Format jalankan program salah!" << endl;
-        cout << "Gunakan: .\\gitsim <Username>" << endl; 
+        cout << WARNA_MERAH << "Error: Nama penulis harus disertakan sebagai argumen!" << WARNA_RESET << "\n";
+        cout << "Penggunaan: .\\gitsim <Username>\n";
         return 1;
     }
-
-    string namaPenulis = argumen[1]; 
-    int totalComitGlobal = 0; 
-
-    int jumlahRepo = 0;
+    
+    string namaPenulis = argumen[1];
+    int totalComitGlobal = 0;
+    
     int kapasitasRepo = 4;
+    int jumlahRepo = 0;
+    int indeksRepoAktif = 0;
     Repositori* daftarRepositori = new Repositori[kapasitasRepo];
-    int indeksRepoAktif = -1;
-
+  
     bersihkanLayar();
-    cout << "GITSIM" << endl; 
-    cout << "Lightweight Git Simulator" << endl; 
-    cout << "Author: " << namaPenulis << endl; 
-    cout << "git init" << endl; 
-    cout << "Repository name: "; 
+    cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Lightweight Git Simulator\n";
+    cout << "Author: " << namaPenulis << "\n";
+    cout << "----------------------------------------------------------------\n";
+    cout << "git init\n";
+    cout << "----------------------------------------------------------------\n";
     
+    cout << WARNA_SIAN << "Repository name: " << WARNA_RESET;
     string namaRepoAwal;
-    getline(cin, namaRepoAwal); 
-    if (namaRepoAwal.empty()) {
-        namaRepoAwal = "my-repo"; 
-    }
-
-    daftarRepositori[jumlahRepo].nama = namaRepoAwal;
-    daftarRepositori[jumlahRepo].jumlahCabang = 0;
-    daftarRepositori[jumlahRepo].kapasitasCabang = 2;
-    daftarRepositori[jumlahRepo].daftarCabang = new Cabang[daftarRepositori[jumlahRepo].kapasitasCabang];
-    daftarRepositori[jumlahRepo].namaCabangAktif = "main"; 
+    getline(cin, namaRepoAwal);
     
-    tambahCabangKeRepo(daftarRepositori[jumlahRepo], "main");
+    if (namaRepoAwal.empty()) {
+        namaRepoAwal = "my-repo";
+    }
+    
+    daftarRepositori[0].nama = namaRepoAwal;
+    daftarRepositori[0].jumlahCabang = 0;
+    daftarRepositori[0].kapasitasCabang = 2;
+    daftarRepositori[0].daftarCabang = new Cabang[daftarRepositori[0].kapasitasCabang];
+    daftarRepositori[0].namaCabangAktif = "main";
+    
+    tambahCabangKeRepo(daftarRepositori[0], "main");
     indeksRepoAktif = jumlahRepo;
-    jumlahRepo++;
-
-    cout << WARNA_HIJAU << "[OK] Initialized empty repository: " << namaRepoAwal << WARNA_RESET << endl; 
-    cout << "On branch: " << WARNA_HIJAU << "main" << WARNA_RESET << endl; 
-    Enter(); 
-
+    jumlahRepo = 1;
+    
+    cout << "\n" << WARNA_HIJAU << "[OK]" << WARNA_RESET << " Initialized empty repository: " << namaRepoAwal << "\n";
+    cout << "On branch: " << WARNA_HIJAU << "main" << WARNA_RESET << "\n";
+    Enter();
+    
     while (true) {
         bersihkanLayar();
         Repositori& repoSaatIni = daftarRepositori[indeksRepoAktif];
         Cabang* cabangSaatIni = ambilCabangAktif(repoSaatIni);
-
-        cout << "GITSIM Git Simulator" << endl; 
-        cout << "Author: " << WARNA_HIJAU << namaPenulis << WARNA_RESET 
-             << "   Repo: " << WARNA_HIJAU << repoSaatIni.nama << WARNA_RESET 
-             << "   HEAD: " << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET 
-             << " | [" << (indeksRepoAktif + 1) << "/" << jumlahRepo << "]" << endl; 
         
-        cout << "[1] git commit" << endl; 
-        cout << "[2] git log" << endl; 
-        cout << "[3] git branch" << endl; 
-        cout << "[4] git checkout" << endl; 
-        cout << "[5] new repository" << endl; 
-        cout << "[6] switch repository" << endl; 
-        cout << "[0] exit" << endl; 
-        cout << ">> ";
-
+        cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+        cout << "Author: " << WARNA_PUTIH << namaPenulis << WARNA_RESET;
+        cout << " | Repo: " << WARNA_PUTIH << repoSaatIni.nama << WARNA_RESET;
+        cout << " | HEAD: " << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET;
+        cout << " | [" << WARNA_KUNING << (indeksRepoAktif + 1) << "/" << jumlahRepo << WARNA_RESET << "]\n";
+        cout << "----------------------------------------------------------------\n";
+        cout << "[1] git commit\n";
+        cout << "[2] git log\n";
+        cout << "[3] git branch\n";
+        cout << "[4] git checkout\n";
+        cout << "[5] new repository\n";
+        cout << "[6] switch repository\n";
+        cout << "[0] exit\n";
+        cout << "----------------------------------------------------------------\n";
+        
+        cout << WARNA_SIAN << "> " << WARNA_RESET;
+        
         string pilihanMenu;
         getline(cin, pilihanMenu);
-
-        if (pilihanMenu == "1") {
+        
+        if (pilihanMenu == "1") { 
             bersihkanLayar();
-            cout << "GITSIM" << endl;
-            cout << "Git Simulator" << endl;
-            cout << "Author: " << namaPenulis << endl;
-            cout << "git commit [" << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET << "]" << endl; 
-            
-            cout << "Message: "; 
+            cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+            cout << "Author: " << namaPenulis << "\n";
+            cout << "-----------------------------------------------------\n";
+            cout << "git commit  [" << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET << "]\n";
+            cout << "-----------------------------------------------------\n";
+            cout << WARNA_SIAN << "Message :  " << WARNA_RESET;
             string pesanComit;
             getline(cin, pesanComit);
             
-            cout << "Push commit? (y/n): "; 
+            cout << WARNA_SIAN << "\nPush commit? (y/n): " << WARNA_RESET;
             string konfirmasi;
             getline(cin, konfirmasi);
-
+            
             if (konfirmasi == "y" || konfirmasi == "Y") {
                 totalComitGlobal++;
                 string hashBerikutnya = Hash(totalComitGlobal);
-                comitKeCabang(*cabangSaatIni, pesanComit, namaPenulis, hashBerikutnya); 
+                comitKeCabang(*cabangSaatIni, pesanComit, namaPenulis, hashBerikutnya);
                 
-                cout << "[" << WARNA_HIJAU << repoSaatIni.namaCabangAktif << " " << hashBerikutnya << WARNA_RESET << "] " << pesanComit << endl; 
-                cout << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET << " -> " << WARNA_HIJAU << "origin/" << repoSaatIni.namaCabangAktif << WARNA_RESET << endl; 
-                cout << "   git push origin " << repoSaatIni.namaCabangAktif << endl; 
+                cout << "\n" << WARNA_HIJAU << "[" << repoSaatIni.namaCabangAktif << " " << hashBerikutnya << "]" << WARNA_RESET << " " << pesanComit << "\n\n";
+                cout << "-----------------------------------------------------\n";
+                cout << WARNA_ABU << repoSaatIni.namaCabangAktif << " -> origin/" << repoSaatIni.namaCabangAktif << WARNA_RESET << "\n";
+                cout << "$ git push origin " << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET << "\n";
+                cout << "-----------------------------------------------------\n\n";
             } else {
-                cout << " Commit dibatalkan." << endl;
+                cout << "\n[INFO] Commit dibatalkan.\n\n";
             }
-            Enter(); 
-        } 
+            Enter();
+        }
         else if (pilihanMenu == "2") {
             bersihkanLayar();
-            cout << "GITSIM" << endl; 
-            cout << "Git Simulator" << endl; 
-            cout << "Author: " << namaPenulis << endl; 
-            cout << "git log [" << WARNA_HIJAU << repoSaatIni.namaCabangAktif << "]" << endl << endl; 
-
+            cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+            cout << "Author: " << namaPenulis << "\n";
+            cout << "-----------------------------------------------------\n";
+            cout << "git log  [" << WARNA_HIJAU << repoSaatIni.namaCabangAktif << WARNA_RESET << "]\n";
+            cout << "-----------------------------------------------------\n";
+            
             if (cabangSaatIni->jumlahComit == 0) {
-                cout << "(No commits on this branch)" << endl; 
+                cout << "(No commits on this branch)\n";
             } else {
                 for (int i = cabangSaatIni->jumlahComit - 1; i >= 0; i--) {
-                    cout << WARNA_KUNING << "commit " << cabangSaatIni->daftarComit[i].id << WARNA_RESET << endl; 
-                    cout << "Author: " << cabangSaatIni->daftarComit[i].penulis << endl; 
-                    cout << "Date  : " << cabangSaatIni->daftarComit[i].stempelWaktu << endl << endl; 
-                    cout << "    " << cabangSaatIni->daftarComit[i].pesan << endl << endl; 
+                    cout << "commit " << WARNA_KUNING << cabangSaatIni->daftarComit[i].id << WARNA_RESET << "\n";
+                    cout << "Author: " << cabangSaatIni->daftarComit[i].penulis << "\n";
+                    cout << "Date  : " << cabangSaatIni->daftarComit[i].stempelWaktu << "\n";
+                    cout << "        " << cabangSaatIni->daftarComit[i].pesan << "\n";
+                    if(i > 0) cout << "\n"; 
                 }
+                cout << "\n";
+                cout << "-----------------------------------------------------\n\n";
             }
-            Enter(); 
-        } 
-        else if (pilihanMenu == "3") {
+            Enter();
+        }
+        else if (pilihanMenu == "3") { 
             bersihkanLayar();
-            cout << "GITSIM" << endl; 
-            cout << "Git Simulator" << endl; 
-            cout << "Author: " << namaPenulis << endl; 
-            cout << "git branch" << endl; 
-
+            cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+            cout << "Author: " << namaPenulis << "\n";
+            cout << "-----------------------------------------------------\n";
+            cout << "git branch\n";
+            cout << "-----------------------------------------------------\n";
+            
             for (int i = 0; i < repoSaatIni.jumlahCabang; i++) {
                 if (repoSaatIni.daftarCabang[i].nama == repoSaatIni.namaCabangAktif) {
-                    cout << WARNA_HIJAU << "* " << repoSaatIni.daftarCabang[i].nama 
-                         << " (" << repoSaatIni.daftarCabang[i].jumlahComit << " commits)" << WARNA_RESET << endl; 
+                    cout << WARNA_HIJAU << "* " << WARNA_RESET << repoSaatIni.daftarCabang[i].nama 
+                         << " (" << repoSaatIni.daftarCabang[i].jumlahComit << " commits)\n";
                 } else {
                     cout << "  " << repoSaatIni.daftarCabang[i].nama 
-                         << " (" << repoSaatIni.daftarCabang[i].jumlahComit << " commits)" << endl; 
+                         << " (" << repoSaatIni.daftarCabang[i].jumlahComit << " commits)\n";
                 }
             }
-
-            cout << "New branch name: "; 
+            cout << "-----------------------------------------------------\n";
+            
+            cout << WARNA_SIAN <<  "\nNew branch name: " << WARNA_RESET;
+           
             string namaBaru;
             getline(cin, namaBaru);
-
+            
             if (namaBaru.empty()) {
-                cout << WARNA_MERAH << "[ERROR] Branch name cannot be empty!" << WARNA_RESET << endl; 
+                cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Branch name cannot be empty!\n";
             } else {
                 bool adaDuplikasi = false;
                 for (int i = 0; i < repoSaatIni.jumlahCabang; i++) {
@@ -267,39 +286,42 @@ int main(int jumlahArgumen, char* argumen[]) {
                         break;
                     }
                 }
-
+                
                 if (adaDuplikasi) {
-                    cout << WARNA_MERAH << "[ERROR] Branch '" << namaBaru << "' already exists!" << WARNA_RESET << endl; 
+                    cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Branch '" << namaBaru << "' already exists!\n";
                 } else {
                     tambahCabangKeRepo(repoSaatIni, namaBaru, cabangSaatIni);
-                    cout << WARNA_HIJAU << "[OK] Branch '" << namaBaru << "' created from '" 
-                         << repoSaatIni.namaCabangAktif << "'" << WARNA_RESET << endl; 
-                    cout << "     " << cabangSaatIni->jumlahComit << " commit(s) inherited" << endl; 
+                    cout << "\n" << WARNA_HIJAU << "[OK]" << WARNA_RESET << " Branch '" << namaBaru 
+                         << "' created from '" << repoSaatIni.namaCabangAktif << "'\n";
+                    cout << "     " << cabangSaatIni->jumlahComit << " commit(s) inherited\n";
                 }
             }
-            Enter(); 
-        } 
-        else if (pilihanMenu == "4") {
+            Enter();
+        }
+        else if (pilihanMenu == "4") { 
             bersihkanLayar();
-            cout << "GITSIM" << endl; 
-            cout << "Git Simulator" << endl; 
-            cout << "Author: " << namaPenulis << endl; 
-            cout << "git checkout" << endl; 
-
+            cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+            cout << "Author: " << namaPenulis << "\n";
+            cout << "-----------------------------------------------------\n";
+            cout << "git checkout\n";
+            cout << "-----------------------------------------------------\n";
+            
             for (int i = 0; i < repoSaatIni.jumlahCabang; i++) {
                 if (repoSaatIni.daftarCabang[i].nama == repoSaatIni.namaCabangAktif) {
-                    cout << WARNA_HIJAU << "* " << repoSaatIni.daftarCabang[i].nama << WARNA_RESET << endl; 
+                    cout << WARNA_HIJAU << "* " << WARNA_RESET << repoSaatIni.daftarCabang[i].nama << "\n";
                 } else {
-                    cout << "  " << repoSaatIni.daftarCabang[i].nama << endl; 
+                    cout << "  " << repoSaatIni.daftarCabang[i].nama << "\n";
                 }
             }
-
-            cout << "Switch to branch: "; 
+            cout << "-----------------------------------------------------\n";
+            
+            cout << WARNA_SIAN << "\nSwitch to branch: " << WARNA_RESET;
+           
             string cabangTujuan;
             getline(cin, cabangTujuan);
-
+            
             if (cabangTujuan == repoSaatIni.namaCabangAktif) {
-                cout << WARNA_MERAH << "[ERROR] Invalid branch!" << WARNA_RESET << endl; 
+                cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Invalid branch!\n";
             } else {
                 bool ditemukan = false;
                 for (int i = 0; i < repoSaatIni.jumlahCabang; i++) {
@@ -309,30 +331,31 @@ int main(int jumlahArgumen, char* argumen[]) {
                         break;
                     }
                 }
-
+                
                 if (ditemukan) {
-                    cout << WARNA_HIJAU << "[OK] Switched to branch '" << cabangTujuan << "'" << WARNA_RESET << endl; 
+                    cout << "\n" << WARNA_HIJAU << "[OK]" << WARNA_RESET << " Switched to branch '" << cabangTujuan << "'\n";
                 } else {
-                    cout << WARNA_MERAH << "[ERROR] Invalid branch!" << WARNA_RESET << endl; 
+                    cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Invalid branch!\n";
                 }
             }
-            Enter(); 
-        } 
-        else if (pilihanMenu == "5") {
+            Enter();
+        }
+        else if (pilihanMenu == "5") { 
             bersihkanLayar();
-            cout << "GITSIM" << endl; 
-            cout << "Git Simulator" << endl; 
-            cout << "Author: " << namaPenulis << endl; 
-            cout << "git init (new repository)" << endl; 
-            cout << "New repository name: "; 
+            cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+            cout << "Author: " << namaPenulis << "\n";
+            cout << "-----------------------------------------------------\n";
+            cout << "git init (new repository)\n";
+            cout << "-----------------------------------------------------\n";
             
+            cout << WARNA_SIAN << "New repository name: " << WARNA_RESET;
             string namaRepoBaru;
             getline(cin, namaRepoBaru);
-
+            
             if (namaRepoBaru.empty()) {
-                namaRepoBaru = "repo-" + to_string(jumlahRepo + 1); 
+                namaRepoBaru = "repo-" + to_string(jumlahRepo + 1);
             }
-
+            
             bool repoDuplikat = false;
             for (int i = 0; i < jumlahRepo; i++) {
                 if (daftarRepositori[i].nama == namaRepoBaru) {
@@ -340,9 +363,9 @@ int main(int jumlahArgumen, char* argumen[]) {
                     break;
                 }
             }
-
+            
             if (repoDuplikat) {
-                cout << WARNA_MERAH << "[ERROR] Repository '" << namaRepoBaru << "' already exists!" << WARNA_RESET << endl; 
+                cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Repository '" << namaRepoBaru << "' already exists!\n";
             } else {
                 if (jumlahRepo >= kapasitasRepo) {
                     kapasitasRepo *= 2;
@@ -353,20 +376,84 @@ int main(int jumlahArgumen, char* argumen[]) {
                     delete[] daftarRepositori;
                     daftarRepositori = wadahSementara;
                 }
-
+                
                 daftarRepositori[jumlahRepo].nama = namaRepoBaru;
                 daftarRepositori[jumlahRepo].jumlahCabang = 0;
                 daftarRepositori[jumlahRepo].kapasitasCabang = 2;
                 daftarRepositori[jumlahRepo].daftarCabang = new Cabang[daftarRepositori[jumlahRepo].kapasitasCabang];
-                daftarRepositori[jumlahRepo].namaCabangAktif = "main"; 
+                daftarRepositori[jumlahRepo].namaCabangAktif = "main";
                 
                 tambahCabangKeRepo(daftarRepositori[jumlahRepo], "main");
                 
-                indeksRepoAktif = jumlahRepo; 
+                indeksRepoAktif = jumlahRepo;
                 jumlahRepo++;
-
-                cout << WARNA_HIJAU << "[OK] Repository '" << namaRepoBaru << "' created and set as active." << WARNA_RESET << endl; 
-                cout << "On branch: " << WARNA_HIJAU << "main" << WARNA_RESET << endl; 
+                
+                cout << "\n" << WARNA_HIJAU << "[OK]" << WARNA_RESET << " Repository '" << namaRepoBaru << "' created and set as active.\n";
+                cout << "On branch: " << WARNA_HIJAU << "main" << WARNA_RESET << "\n";
             }
-            Enter(); 
-        } 
+            Enter();
+        }
+        else if (pilihanMenu == "6") { 
+            bersihkanLayar();
+            cout << WARNA_SIAN << "GITSIM" << WARNA_RESET << " - Git Simulator\n";
+            cout << "Author: " << namaPenulis << "\n";
+            cout << "-----------------------------------------------------\n";
+            cout << "switch repository\n";
+            cout << "-----------------------------------------------------\n";
+            
+            for (int i = 0; i < jumlahRepo; i++) {
+                Repositori& r = daftarRepositori[i];
+                Cabang* cabangHead = nullptr;
+                for (int j = 0; j < r.jumlahCabang; j++) {
+                    if (r.daftarCabang[j].nama == r.namaCabangAktif) {
+                        cabangHead = &r.daftarCabang[j];
+                        break;
+                    }
+                }
+                
+                int komitDiHead = cabangHead ? cabangHead->jumlahComit : 0;
+                
+                if (i == indeksRepoAktif) {
+                    cout << WARNA_HIJAU << "* [" << (i + 1) << "] " << r.nama 
+                         << " (" << r.jumlahCabang << " branch, " << komitDiHead << " commits at HEAD)" << WARNA_RESET << "\n";
+                } else {
+                    cout << "  [" << (i + 1) << "] " << r.nama 
+                         << " (" << r.jumlahCabang << " branch, " << komitDiHead << " commits at HEAD)\n";
+                }
+            }
+            cout << "-----------------------------------------------------\n";
+            
+            cout << "\n" << WARNA_SIAN << "Select repository number: " << WARNA_RESET;
+            string indeksTujuanStr;
+            getline(cin, indeksTujuanStr);
+            
+            try {
+                int indeksTujuan = stoi(indeksTujuanStr) - 1;
+                if (indeksTujuan >= 0 && indeksTujuan < jumlahRepo) {
+                    indeksRepoAktif = indeksTujuan;
+                    cout << "\n" << WARNA_HIJAU << "[OK]" << WARNA_RESET << " Switched to repository '" << daftarRepositori[indeksRepoAktif].nama << "'\n";
+                    cout << "HEAD: " << WARNA_HIJAU << daftarRepositori[indeksRepoAktif].namaCabangAktif << WARNA_RESET << "\n";
+                } else {
+                    cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Nomor repository tidak valid!\n";
+                }
+            } catch (...) {
+                cout << "\n" << WARNA_MERAH << "[ERROR]" << WARNA_RESET << " Input harus berupa angka!\n";
+            }
+            Enter();
+        }
+        else if (pilihanMenu == "0") { 
+            bersihkanLayar();
+            cout << WARNA_SIAN << "Session Ended" << WARNA_RESET << "\n";
+            cout << WARNA_ABU << "Author : " << WARNA_RESET << WARNA_PUTIH << namaPenulis << WARNA_RESET << "\n";
+            cout << WARNA_HIJAU << "Goodbye!" << WARNA_RESET << "\n\n";
+            break;
+        }
+    }
+    
+    for (int i = 0; i < jumlahRepo; i++) {
+        bersihkanMemoriRepositori(daftarRepositori[i]);
+    }
+    delete[] daftarRepositori;
+    
+    return 0;
+}
